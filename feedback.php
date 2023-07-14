@@ -18,9 +18,9 @@
 	/**
 	 * Create constant value of base file.
 	 */
-	if ( ! defined( 'PRODUCT_BASEFILE' ) ) {
-		define( 'PRODUCT_BASEFILE', plugin_dir_url( __FILE__ ) );
-	}
+if ( ! defined( 'PRODUCT_BASEFILE' ) ) {
+	define( 'PRODUCT_BASEFILE', plugin_dir_url( __FILE__ ) );
+}
 
 	register_activation_hook( __FILE__, array( 'Dashboard', 'activate' ) );
 	register_deactivation_hook( __FILE__, array( 'Dashboard', 'deactivate' ) );

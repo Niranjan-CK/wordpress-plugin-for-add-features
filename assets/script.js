@@ -83,21 +83,3 @@ function submit_like_form(event) {
 
   
 }
-
-function submit_dislike_form(event){
-  event.preventDefault();
-  var form = event.target.value;
-
-  action = "update_vote_dislike";
-                
-  jQuery.ajax({
-      url: wp_feedback_vote.ajax_url,
-      type:'POST',
-      data:'&action='+action+'&vote_id='+form,
-      success:function(data)
-      {
-        document.getElementById('text'+event.target.id).textContent=data;
-          console.log(data);
-      }
-  });
-}

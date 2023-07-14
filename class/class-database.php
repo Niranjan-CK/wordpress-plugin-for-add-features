@@ -205,11 +205,11 @@ class Database {
 	}
 
 	/**
-	 * Total Dislikes
+	 * Total likes
 	 */
 	public static function vote_like_feedback() {
-		if ( ! isset( $_POST['vote_nonce'] ) || ! wp_verify_nonce( $_POST['vote_nonce'], 'vote' ) ) {
-			// return;
+		if ( ! isset( $_POST['vote_nonce'] ) && wp_verify_nonce( $_POST['vote_nonce'], 'vote' ) ) {
+			return;
 		}
 
 		if ( isset( $_POST['vote_id'] ) ) {
@@ -218,45 +218,38 @@ class Database {
 			$board_id    = $feedback[0];
 			$feedback_id = $feedback[1];
 			$user_id     = get_current_user_id();
-			$data = array(
-				'fd_id'          => $board_id,
-				'user_id'        => $user_id,
-				'feedback_id'    => $feedback_id,
-				'vote'           => 1,
+			$data        = array(
+				'fd_id'       => $board_id,
+				'user_id'     => $user_id,
+				'feedback_id' => $feedback_id,
+				'vote'        => 1,
 			);
-		
 
 			// Update the vote by 1.
 			global $wpdb;
 
 			$table_name = $wpdb->prefix . 'votes';
 			$query      = $wpdb->query( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) );
-			// var_dump( $query );
-			if (! $query ) {
-				self::create_vote_table( $table_name , $data );
-			}
-			else{
+			if ( ! $query ) {
+				self::create_vote_table( $table_name, $data );
+			} else {
 				self::insert_vote( $table_name, $data );
-				
+
 				$new_query = $wpdb->get_results( $wpdb->prepare( "SELECT vote FROM {$wpdb->prefix}product_feedback WHERE fd_id = %d and id = %d", $board_id, $feedback_id ) );
 
 				echo esc_html( $new_query[0]->vote );
 				exit();
 			}
-
-
-
 		}
 	}
 
-
 	/**
 	 * Create vote table
-	 * 
+	 *
 	 * @param string $table_name The table name.
 	 * @param array  $data The data.
 	 */
-	public static function create_vote_table( $table_name , $data ) {
+	public static function create_vote_table( $table_name, $data ) {
 		echo 'create table';
 		global $wpdb;
 		// SQL query to create the table.
@@ -277,65 +270,24 @@ class Database {
 		self::insert_vote( $table_name, $data );
 	}
 
-
 	/**
 	 * Insert vote
-	 * 
+	 *
 	 * @param string $table_name The table name.
 	 * @param array  $data The data.
 	 */
 	public static function insert_vote( $table_name, $data ) {
 		global $wpdb;
-		// var_dump( $data['fd_id'] );
-		$query = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}votes WHERE fd_id = %d and user_id = %d and feedback_id = %d ", $data['fd_id'], $data['user_id'] , $data['feedback_id'] ) );
-		if( empty( $query ) ) {
+		$query = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}votes WHERE fd_id = %d and user_id = %d and feedback_id = %d ", $data['fd_id'], $data['user_id'], $data['feedback_id'] ) );
+		if ( empty( $query ) ) {
 			$wpdb->insert( $table_name, $data );
-			$query = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}product_feedback WHERE fd_id = %d and  id = %d ", $data['fd_id'] , $data['feedback_id']  ) );
-			$vote = $query[0]->vote;
-			$vote = $vote + 1;
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}product_feedback SET vote = %d WHERE fd_id = %d and id = %d ", $vote, $data['fd_id'] , $data['feedback_id'] ) );
+			$query = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}product_feedback WHERE fd_id = %d and  id = %d ", $data['fd_id'], $data['feedback_id'] ) );
+			$vote  = $query[0]->vote;
+			++$vote;
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}product_feedback SET vote = %d WHERE fd_id = %d and id = %d ", $vote, $data['fd_id'], $data['feedback_id'] ) );
 
-			// $wpdb->update( $wpdb->prefix . 'product_feedback', array( 'vote' => $data['vote'] ), array( 'id' => $data['fd_id'] ) );
-		}else
-		{
+		} else {
 			echo 'You have already voted';
-		}
-
-	}
-
-	/**
-	 * Total Likes
-	 */
-	public static function vote_dislike_feedback() {
-		if ( ! isset( $_POST['vote_nonce'] ) || ! wp_verify_nonce( $_POST['vote_nonce'], 'vote' ) ) {
-			// return;
-		}
-		if ( isset( $_POST['vote_id'] ) ) {
-
-			$feedback    = $_POST['vote_id'];
-			$feedback    = explode( ',', $feedback );
-			$board_id    = $feedback[0];
-			$feedback_id = $feedback[1];
-
-			// Update the vote by 1.
-			global $wpdb;
-			$query = $wpdb->get_results( $wpdb->prepare( "SELECT vote FROM {$wpdb->prefix}product_feedback WHERE fd_id = %d and id = %d", $board_id, $feedback_id ) );
-			if ( null === $query[0]->vote ) {
-				$previous_like = 0;
-			} else {
-				$previous_like = $query[0]->vote;
-			}
-
-			$new_like = array(
-				'vote' => $previous_like + 1,
-			);
-			$wpdb->update( $wpdb->prefix . 'product_feedback', $new_like, array( 'id' => $feedback_id ) );
-
-			$new_query = $wpdb->get_results( $wpdb->prepare( "SELECT vote FROM {$wpdb->prefix}product_feedback WHERE fd_id = %d and id = %d", $board_id, $feedback_id ) );
-
-			echo esc_html( $new_query[0]->vote );
-
-			exit();
 		}
 	}
 }
